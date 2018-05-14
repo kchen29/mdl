@@ -32,7 +32,8 @@
       (princ char s-stream))))
 
 ;;;primitive parser
-(defmacro match-single (tokens-var (patterns &rest actions))
+(defmacro parse-single (tokens-var (patterns &rest actions))
+  "Parses a single form of the grammar."
   (let ((temp (gensym)))
     `((let ((,temp ,tokens-var))
         (and ,@(loop for pattern in patterns
@@ -52,7 +53,16 @@
                                  `(symbol-value (pop ,tokens-var)))))
         ,@actions))))
 
-(defmacro match (tokens-var &body matches)
+(defmacro parse (tokens-var &body grammar)
+  "Generates a parser for TOKENS-VAR following GRAMMAR.
+   Each form in GRAMMAR is of the form (PATTERNS &rest ACTIONS).
+     PATTERNS can be an atom or a list. If it is an atom, it is equal to a singleton list.
+     PATTERNS is matched if the token-list matches each item sequentially.
+     Each form in PATTERNS is either a token or a list.
+       If the form is a token then the token-list should have that token as the next token
+       If the form is a list and has &opt as the first argument then that token is optional.
+     Each ACTION in ACTIONS can use the value of each token by using the symbols 
+     A0, A1, A2, ... respectively indicating the index of each token in the pattern."
   `(cond
      ,@(loop for match-form in matches
              if (atom (car match-form))

@@ -33,9 +33,11 @@
                (push (matrix-multiply (pop stack) transform) stack)))
       (do ((token-list (lexify file #'classifier)))
           ((not token-list))
-        (match token-list
-          (push (push (copy-matrix (car stack)) stack))
-          (pop (pop stack))
+        (parse token-list
+          (push
+           (push (copy-matrix (car stack)) stack))
+          (pop
+           (pop stack))
           ((move number number number)
            (update-current-stack (make-translate a1 a2 a3)))
           ((scale number number number)
@@ -54,5 +56,7 @@
           ((line (&opt symbol) number number number (&opt symbol) number number number (&opt symbol))
            (add-edge edges a2 a3 a4 a6 a7 a8)
            (post-add-lines))
-          (display (display t))
-          ((save symbol) (save a1)))))))
+          (display
+           (display t))
+          ((save symbol)
+           (save a1)))))))
