@@ -6,4 +6,3 @@ all:
 
 clean:
 	rm -f *~ *.fasl *.ppm *.png
-	rm -f compiler/*~ compiler/*.fasl

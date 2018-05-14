@@ -91,6 +91,17 @@
        (dolist (,var2 (cdr ,list-move))
          ,@body))))
 
+(defmacro do-stream ((var stream) (test &optional (result nil result-supplied-p)) &body body)
+  "Concise way to iterate over STREAM. Iterates over each character; stops when eof is found or
+   TEST is true, and returns RESULT. Performs BODY after each time VAR is set."
+  `(do ((,var (read-char ,stream nil nil)
+              (read-char ,stream nil nil)))
+       ,(if result-supplied-p
+            `((or (null ,var) ,test) ,result)
+            `((or (null ,var) ,test)))
+     ,@body))
+
+;;switch
 (defmacro switch (value test &body cases)
   "Macro for switch-case statements.
    TESTs VALUE with the first element in each case of CASES.
@@ -123,6 +134,7 @@
                                collect `(rotatef ,x ,y))))))))
 
 ;;;functions
+;;numeric
 (defun evaluate-polynomial (x &rest coefficients)
   "Evaluates a polynomial in X with COEFFICIENTS. Starts from the least power (x^0) and
    increases with each coefficient."
@@ -139,11 +151,13 @@
   "Calculates the difference quotient of A minus B divided by C minus D."
   (/ (- a b) (- c d)))
 
+;;array
 (defun copy-array (array)
   "Copies an array."
   (let ((dims (array-dimensions array)))
     (adjust-array (make-array dims :displaced-to array) dims)))
 
+;;symbols
 (defun concat-symbol (&rest args)
   "Takes symbols and strings to form a new symbol."
   (intern (string-upcase (apply #'concat-string args))))
@@ -154,4 +168,16 @@
                      (dolist (a args) (princ a s)))))
 
 (defun make-keyword (sym)
+  "Returns SYM as a keyword."
   (intern (string sym) 'keyword))
+
+(defun name= (sym1 sym2)
+  "Returns if SYM1 and SYM2 have string= symbol names."
+  (string= (symbol-name sym1) (symbol-name sym2)))
+
+;;characters
+(defun whitespace-p (char)
+  "Returns true if CHAR is a whitespace character."
+  (or (not (graphic-char-p char)) (char= char #\Space)))
+
+
