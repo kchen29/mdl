@@ -6,5 +6,5 @@
    (:file "edges" :depends-on ("matrix"))
    (:file "gmath")
    (:file "draw" :depends-on ("display" "edges" "gmath"))
-   (:file "lexer" :depends-on ("utils"))
-   (:file "mdl" :depends-on ("draw" "lexer"))))
+   (:file "compiler" :depends-on ("utils"))
+   (:file "mdl" :depends-on ("draw" "compiler"))))
