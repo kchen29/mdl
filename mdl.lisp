@@ -26,7 +26,7 @@
                (draw-lines edges '(255 0 255))
                (clear-matrix edges))
              (post-add-polygons ()
-               (matrix-multiply (car stack) edges)
+               (matrix-multiply (car stack) polygons)
                (draw-polygons polygons)
                (clear-matrix polygons))
              (update-current-stack (transform)
