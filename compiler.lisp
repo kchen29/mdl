@@ -3,20 +3,18 @@
 ;;;lexer
 (defun lexify (file classifier)
   "Given CLASSIFIER, classify each token in FILE, producing a token list.
-   CLASSIFIER should return uninterned symbols.
-   If skip is returned, don't add the token and skip the line.
-   If the returned symbol is unbound, then give it the value of the substring."
+   CLASSIFIER should return fresh uninterned symbols.
+   If NIL is returned, the token is not added.
+   If the returned symbol is not bound, give it the value of the substring."
   (with-open-file (stream file)
     (collect-to
      (do ((sub (read-token stream) (read-token stream)))
          ((string= "" sub))
-       (let ((sym (funcall classifier sub)))
-         (if (name= 'skip sym)
-             (read-line stream)
-             (progn
-               (unless (boundp sym)
-                 (setf (symbol-value sym) sub))
-               (collect sym))))))))
+       (let ((sym (funcall classifier sub stream)))
+         (when sym
+           (unless (boundp sym)
+             (setf (symbol-value sym) sub))
+           (collect sym)))))))
 
 (defun read-token (stream)
   "Reads a token from STREAM."
