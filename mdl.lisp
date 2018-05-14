@@ -16,15 +16,6 @@
                                         x))
     (t (error "~a does not indicate a token" str))))
 
-
-(defmacro match (tokens-var &body matches)
-  `(cond
-     ,@(loop for match-form in matches
-             if (atom (car match-form))
-               do (setf (car match-form) (list (car match-form)))
-             collect (macroexpand-1 `(match-single ,tokens-var ,match-form)))
-     (t (error "Parser error. Token list: ~a" ,tokens-var))))
-
 (defmacro match-single (tokens-var (patterns &rest actions))
   (let ((temp (gensym)))
     `((let ((,temp ,tokens-var))
@@ -44,6 +35,14 @@
                                       nil)
                                  `(symbol-value (pop ,tokens-var)))))
         ,@actions))))
+
+(defmacro match (tokens-var &body matches)
+  `(cond
+     ,@(loop for match-form in matches
+             if (atom (car match-form))
+               do (setf (car match-form) (list (car match-form)))
+             collect (macroexpand-1 `(match-single ,tokens-var ,match-form)))
+     (t (error "Parser error. Token list: ~a" ,tokens-var))))
 
 (defun compile-mdl (file)
   "Compiles FILE to an image."
