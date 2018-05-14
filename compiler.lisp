@@ -64,8 +64,8 @@
      Each ACTION in ACTIONS can use the value of each token by using the symbols 
      A0, A1, A2, ... respectively indicating the index of each token in the pattern."
   `(cond
-     ,@(loop for match-form in matches
+     ,@(loop for match-form in grammar
              if (atom (car match-form))
                do (setf (car match-form) (list (car match-form)))
-             collect (macroexpand-1 `(match-single ,tokens-var ,match-form)))
+             collect (macroexpand-1 `(parse-single ,tokens-var ,match-form)))
      (t (error "Parser error. Token list: ~a" ,tokens-var))))
