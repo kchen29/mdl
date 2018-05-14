@@ -76,10 +76,10 @@
 ;;everything are lists for now
 (defparameter ambient '(50 50 50))
 (defparameter view '(0 0 1))
-(defparameter light '(-1 1 1))
+(defparameter light '(-1 1 .6))
 (defparameter light-color '(255 0 255))
 (defparameter areflect '(0.1 0.1 0.1))
-(defparameter dreflect '(0.5 0.5 0.5))
+(defparameter dreflect '(0.7 0.7 0.7))
 (defparameter sreflect '(0.8 0.8 0.8))
 
 (defun bound (color)
