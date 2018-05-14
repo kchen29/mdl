@@ -17,4 +17,4 @@
 (defun compile-mdl (file)
   "Compiles FILE to an image."
   (let ((token-list (lexify file #'classifier)))
-    ))
+    (print token-list)))

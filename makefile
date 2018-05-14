@@ -1,8 +1,8 @@
 sbcl := sbcl --noinform --non-interactive --load "load.lisp" --eval
-script := script
+script := robot.mdl
 
 all:
-	$(sbcl) '(main "$(script)")'
+	$(sbcl) '(compile-mdl "$(script)")'
 
 clean:
 	rm -f *~ *.fasl *.ppm *.png

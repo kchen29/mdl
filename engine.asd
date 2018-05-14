@@ -7,5 +7,4 @@
    (:file "edges" :depends-on ("matrix"))
    (:file "gmath")
    (:file "draw" :depends-on ("display" "edges" "gmath"))
-   (:file "parser" :depends-on ("draw"))
-   (:file "main" :depends-on ("parser"))))
+   (:file "mdl" :depends-on ("draw"))))
