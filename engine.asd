@@ -1,4 +1,5 @@
 (defsystem "engine"
+  :depends-on ("compiler")
   :components
   ((:file "utils")
    (:file "display" :depends-on ("utils"))
