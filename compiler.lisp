@@ -30,26 +30,69 @@
       (princ char s-stream))))
 
 ;;;primitive parser
-(defmacro parse-single (tokens-var (patterns &rest actions))
-  "Parses a single form of the grammar."
+(defun opt-p (pattern)
+  "Returns if PATTERN is optional."
+  (and (listp pattern) (eq (car pattern) '&opt)))
+
+(defmacro parse-test (tokens-var match-form)
+  "Tests if TOKENS-VAR matches PATTERNS in MATCH-FORM."
   (let ((temp (gensym)))
-    `((let ((,temp ,tokens-var))
-        (and ,@(loop for pattern in patterns
-                     if (and (listp pattern) (eq (car pattern) '&opt))
-                       collect `(if (name= ',(cadr pattern) (car ,temp))
-                                    (pop ,temp)
-                                    t)
-                     else
-                       collect `(name= ',pattern (pop ,temp)))))
-      (let ,(loop for pattern in patterns
-                  for i = 0 then (1+ i)
-                  collect `(,(concat-symbol 'a i)
-                            ,(if (and (listp pattern) (eq (car pattern) '&opt))
-                                 `(if (name= ',(cadr pattern) (car ,tokens-var))
-                                      (symbol-value (pop ,tokens-var))
-                                      nil)
-                                 `(symbol-value (pop ,tokens-var)))))
-        ,@actions))))
+    `(let ((,temp ,tokens-var))
+       (and ,@(loop for pattern in (car match-form)
+                    collect (if (opt-p pattern)
+                                `(if (name= ',(cadr pattern) (car ,temp))
+                                     (pop ,temp)
+                                     t)
+                                `(name= ',pattern (pop ,temp))))))))
+
+(defmacro dotree ((var tree) &body body)
+  "Iterates over the leaves of TREE with VAR in BODY."
+  (let ((temp1 (gensym)))
+    `(labels ((,temp1 (,var)
+                (cond
+                  ((null ,var))
+                  ((atom ,var)
+                   ,@body)
+                  (t (,temp1 (car ,var))
+                     (,temp1 (cdr ,var))))))
+       (,temp1 ,tree))))
+
+(defun get-leaves (tree)
+  "Returns a hash table of all the leaves in TREE."
+  (let ((hash (make-hash-table)))
+    (dotree (leaf tree)
+      (setf (gethash leaf hash) t))
+    hash))
+
+(defmacro nth-pop (n place)
+  "Return the nth pop of PLACE."
+  ;;special case for simplicity
+  (if (= n 1)
+      `(pop ,place)
+      `(progn
+         (setf ,place (nthcdr ,(1- n) ,place))
+         (pop ,place))))
+
+(defmacro parse-actions (tokens-var (patterns &rest actions))
+  "Anaphoric macro for ACTIONS."
+  (let (leftover)
+    `(let ,(loop for leaves = (get-leaves actions)
+                 for pattern in patterns
+                 for i = 0 then (1+ i)
+                 for j = 1 then (1+ j)
+                 for anaphor = (concat-symbol 'a i)
+                 if (gethash anaphor leaves)
+                   collect `(,anaphor
+                             ,(if (opt-p pattern)
+                                  `(if (name= ',(cadr pattern) (car ,tokens-var))
+                                       (symbol-value (nth-pop ,j ,tokens-var))
+                                       nil)
+                                  `(symbol-value (nth-pop ,j ,tokens-var))))
+                   and do (setf j 0)
+                 finally (setf leftover j))
+       ,(when (> leftover 0)
+          `(nth-pop ,leftover ,tokens-var))
+       ,@actions)))
 
 (defmacro parse (tokens-var &body grammar)
   "Generates a parser for TOKENS-VAR following GRAMMAR.
@@ -65,5 +108,6 @@
      ,@(loop for match-form in grammar
              if (atom (car match-form))
                do (setf (car match-form) (list (car match-form)))
-             collect (macroexpand-1 `(parse-single ,tokens-var ,match-form)))
+             collect `(,(macroexpand-1 `(parse-test ,tokens-var ,match-form))
+                       ,(macroexpand-1 `(parse-actions ,tokens-var ,match-form))))
      (t (error "Parser error. Token list: ~a" ,tokens-var))))

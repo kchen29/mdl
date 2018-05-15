@@ -85,4 +85,4 @@
           (generate_rayfiles)
           ((focal number))
           (display
-           (display t)))))))
+           (display nil)))))))
