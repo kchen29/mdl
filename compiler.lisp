@@ -56,8 +56,8 @@
                                    nil)
                               `(symbol-value (pop ,tokens-var)))))
      (declare (ignorable ,@(loop for pattern in patterns
-                              for i = 0 then (1+ i)
-                              collect (concat-symbol 'a i))))
+                                 for i = 0 then (1+ i)
+                                 collect (concat-symbol 'a i))))
      ,@actions))
 
 (defmacro parse (tokens-var &body grammar)
