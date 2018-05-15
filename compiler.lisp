@@ -30,26 +30,32 @@
       (princ char s-stream))))
 
 ;;;primitive parser
-(defmacro parse-single (tokens-var (patterns &rest actions))
-  "Parses a single form of the grammar."
+(defun opt-p (pattern)
+  "Returns if PATTERN is optional."
+  (and (listp pattern) (eq (car pattern) '&opt)))
+
+(defmacro parse-text (tokens-var patterns)
+  "Tests if TOKENS-VAR matches PATTERNS in MATCH-FORM."
   (let ((temp (gensym)))
-    `((let ((,temp ,tokens-var))
-        (and ,@(loop for pattern in patterns
-                     if (and (listp pattern) (eq (car pattern) '&opt))
-                       collect `(if (name= ',(cadr pattern) (car ,temp))
-                                    (pop ,temp)
-                                    t)
-                     else
-                       collect `(name= ',pattern (pop ,temp)))))
-      (let ,(loop for pattern in patterns
-                  for i = 0 then (1+ i)
-                  collect `(,(concat-symbol 'a i)
-                            ,(if (and (listp pattern) (eq (car pattern) '&opt))
-                                 `(if (name= ',(cadr pattern) (car ,tokens-var))
-                                      (symbol-value (pop ,tokens-var))
-                                      nil)
-                                 `(symbol-value (pop ,tokens-var)))))
-        ,@actions))))
+    `(let ((,temp ,tokens-var))
+       (and ,@(loop for pattern in patterns
+                    collect (if (opt-p pattern)
+                                `(if (name= ',(cadr pattern) (car ,temp))
+                                     (pop ,temp)
+                                     t)
+                                `(name= ',pattern (pop ,temp))))))))
+
+(defmacro parse-actions (tokens-var (patterns &rest actions))
+  "Anaphoric macro for ACTIONS."
+  `(let ,(loop for pattern in patterns
+               for i = 0 then (1+ i)
+               collect `(,(concat-symbol 'a i)
+                         ,(if (opt-p pattern)
+                              `(if (name= ',(cadr pattern) (car ,tokens-var))
+                                   (symbol-value (pop ,tokens-var))
+                                   nil)
+                              `(symbol-value (pop ,tokens-var)))))
+     ,@actions))
 
 (defmacro parse (tokens-var &body grammar)
   "Generates a parser for TOKENS-VAR following GRAMMAR.
@@ -65,5 +71,6 @@
      ,@(loop for match-form in grammar
              if (atom (car match-form))
                do (setf (car match-form) (list (car match-form)))
-             collect (macroexpand-1 `(parse-single ,tokens-var ,match-form)))
+             collect `((parse-text ,tokens-var ,(car match-form))
+                       (parse-actions ,tokens-var ,match-form)))
      (t (error "Parser error. Token list: ~a" ,tokens-var))))
